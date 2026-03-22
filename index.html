@@ -4,59 +4,91 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📂 Organize PDF | EasyUseHub</title>
+
 <style>
-body,html{font-family:'Segoe UI',sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;}
-.container{width:90%;max-width:750px;padding:25px;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.1);text-align:center;}
-.upload{padding:25px;border:3px dashed #9333ea;border-radius:15px;cursor:pointer;color:#9333ea;}
-#pages{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:15px;}
-.page{width:80px;height:100px;border:2px solid #ccc;border-radius:8px;cursor:grab;display:flex;align-items:center;justify-content:center;background:#f9f9f9;}
+body,html{font-family:'Segoe UI';display:flex;justify-content:center;align-items:center;min-height:100vh;background:#fff;}
+.container{width:90%;max-width:800px;padding:25px;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,0.1);}
+.upload{padding:25px;border:3px dashed #9333ea;border-radius:15px;color:#9333ea;cursor:pointer;}
+#pages{display:flex;flex-wrap:wrap;gap:10px;margin-top:15px;justify-content:center;}
+.page{width:90px;border:2px solid #ccc;border-radius:8px;padding:5px;background:#f9f9f9;cursor:grab;}
 .page.dragging{opacity:0.5;}
-button{padding:12px;border:none;border-radius:10px;background:#9333ea;color:#fff;margin:10px;}
+.page canvas{width:100%;border-radius:5px;}
+.num{text-align:center;font-size:0.8rem;color:#555;margin-top:4px;}
+button{padding:12px;margin:10px;border:none;border-radius:10px;background:#9333ea;color:#fff;cursor:pointer;}
 #download{display:none;background:#2563eb;}
-.bottom-buttons{display:flex;justify-content:center;gap:10px;margin-top:20px;}
-.bottom-buttons a{padding:10px 16px;background:#1e293b;color:#fff;border-radius:8px;text-decoration:none;}
-.ad-placeholder{margin:15px 0;padding:15px;border:2px dashed #ccc;border-radius:10px;}
+.bottom-buttons{margin-top:20px;}
+.bottom-buttons a{padding:10px 15px;background:#1e293b;color:#fff;border-radius:8px;text-decoration:none;margin:5px;}
+.ad{margin:15px 0;border:2px dashed #ccc;padding:10px;}
 </style>
 </head>
+
 <body>
 <div class="container">
+
 <h2>📂 Organize PDF</h2>
 
-<div class="ad-placeholder">Ad Placeholder</div>
+<div class="ad">Ad Placeholder</div>
 
-<div class="upload" onclick="file.click()">Upload PDF</div>
+<div class="upload" onclick="file.click()">📁 Upload PDF</div>
 <input type="file" id="file" hidden accept="application/pdf">
 
 <div id="pages"></div>
 
-<button onclick="savePDF()">Save Organized PDF</button>
-<button id="download">Download</button>
+<button onclick="savePDF()">💾 Save Organized PDF</button>
+<button id="download">📥 Download</button>
 
 <div class="bottom-buttons">
 <a href="https://easyusehub.blogspot.com/p/free-pdf-tools-easyusehub.html?m=1">📂 All PDF Tools</a>
 <a href="https://easyusehub.blogspot.com/?m=1">🏠 Home</a>
 </div>
 
-<div class="ad-placeholder">Ad Placeholder</div>
+<div class="ad">Ad Placeholder</div>
+
 </div>
 
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script>
-let pdfDoc,fileData,order=[];
 
-file.onchange=async e=>{
-fileData=e.target.files[0];
-const buf=await fileData.arrayBuffer();
-pdfDoc=await PDFLib.PDFDocument.load(buf);
+<script>
+let pdfDoc,fileData;
+
+// Upload
+file.onchange = async e=>{
+fileData = e.target.files[0];
+if(fileData.size>30*1024*1024){alert('Max 30MB');return;}
+
+const buf = await fileData.arrayBuffer();
+
+// pdf-lib
+pdfDoc = await PDFLib.PDFDocument.load(buf);
+
+// pdf.js preview
+const pdfjs = await pdfjsLib.getDocument({data:buf}).promise;
 
 pages.innerHTML='';
-order=[];
-for(let i=0;i<pdfDoc.getPageCount();i++){
-order.push(i);
-let div=document.createElement('div');
+
+// render pages
+for(let i=0;i<pdfjs.numPages;i++){
+const page = await pdfjs.getPage(i+1);
+const viewport = page.getViewport({scale:0.25});
+
+const canvas = document.createElement('canvas');
+canvas.width = viewport.width;
+canvas.height = viewport.height;
+
+await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+
+const div = document.createElement('div');
 div.className='page';
 div.draggable=true;
-div.textContent=i+1;
+
+const num = document.createElement('div');
+num.className='num';
+num.textContent = i+1;
+
+div.appendChild(canvas);
+div.appendChild(num);
 
 div.ondragstart=()=>div.classList.add('dragging');
 div.ondragend=()=>div.classList.remove('dragging');
@@ -65,27 +97,33 @@ pages.appendChild(div);
 }
 };
 
-pages.ondragover=e=>{
+// Drag reorder
+pages.ondragover = e=>{
 e.preventDefault();
-const dragging=document.querySelector('.dragging');
-const after=Array.from(pages.children).find(el=>e.clientX<el.getBoundingClientRect().left+40);
-if(after) pages.insertBefore(dragging,after);
+const dragging = document.querySelector('.dragging');
+const after = [...pages.children].find(el=>{
+const box = el.getBoundingClientRect();
+return e.clientX < box.left + box.width/2;
+});
+if(after) pages.insertBefore(dragging, after);
 else pages.appendChild(dragging);
 };
 
+// Save PDF
 async function savePDF(){
-const newPdf=await PDFLib.PDFDocument.create();
-const items=[...pages.children];
+const newPdf = await PDFLib.PDFDocument.create();
+
+const items = [...pages.children];
 
 for(let el of items){
-let i=parseInt(el.textContent)-1;
-const [p]=await newPdf.copyPages(pdfDoc,[i]);
+let i = parseInt(el.querySelector('.num').textContent)-1;
+const [p] = await newPdf.copyPages(pdfDoc,[i]);
 newPdf.addPage(p);
 }
 
-const bytes=await newPdf.save();
-const blob=new Blob([bytes],{type:'application/pdf'});
-const url=URL.createObjectURL(blob);
+const bytes = await newPdf.save();
+const blob = new Blob([bytes],{type:'application/pdf'});
+const url = URL.createObjectURL(blob);
 
 download.style.display='block';
 download.onclick=()=>{
@@ -96,5 +134,6 @@ a.click();
 };
 }
 </script>
+
 </body>
 </html>
