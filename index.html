@@ -53,7 +53,7 @@ h1{text-align:center; margin:20px; color: #333; font-size: 24px;}
     background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 8px; cursor: grab; 
     transition: 0.2s; position: relative; width: 110px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-.page-card.selected { border-color: var(--primary); background: #f5e6fa; }
+.page-card.selected { border-color: var(--primary); background: #f5e6fa; box-shadow: 0 0 8px rgba(147, 51, 234, 0.3); }
 .page-card canvas { width: 100%; height: auto; border-radius: 4px; }
 .page-num { margin-top: 5px; font-size: 11px; font-weight: bold; color: #666; }
 .page-card.dragging { opacity: 0.4; border: 2px dashed var(--primary); }
@@ -89,13 +89,19 @@ h1{text-align:center; margin:20px; color: #333; font-size: 24px;}
 
 <div id="instructions">
   <b>How to Use:</b><br>
-  1. Upload PDF (Max 30MB). 2. Click pages to select (optional). 3. Drag pages to reorder. 4. Click Save to download.
+  1. Upload PDF (Max 30MB). 2. Click pages to select specific ones (optional). 3. Drag pages to reorder. 4. Click Save to download your new PDF.
 </div>
 
 <div id="upload-box" onclick="document.getElementById('fileInput').click()">📁 Click to Upload PDF (Max 30MB)</div>
 <input type="file" id="fileInput" accept="application/pdf" hidden>
 
 <div id="pages-container"></div>
+
+<div class="custom-ad-bridge" style="background: linear-gradient(135deg, #7c3aed, #9333ea);" onclick="window.open('https://easyusehub.blogspot.com/p/ultimate-calculators-hub.html', '_blank')">
+    <span class="ad-title">🔢 Smart Online Calculators</span>
+    <p>Loan EMI, Age, BMI & Percentage Calculators - All in One Hub</p>
+    <div class="ad-btn" style="background: #fff; color: #7c3aed;">Try Calculators</div>
+</div>
 
 <div class="controls" id="controls">
     <button class="button" onclick="saveOrganizedPDF()">💾 Save Organized PDF</button>
@@ -105,7 +111,7 @@ h1{text-align:center; margin:20px; color: #333; font-size: 24px;}
 <div class="custom-ad-bridge" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="window.open('https://easyusehub.blogspot.com/p/image-compressor.html', '_blank')">
     <span class="ad-title">⚡ High-Speed Image Compressor</span>
     <p>Optimize images without losing quality at EasyUseHub</p>
-    <div class="ad-btn" style="background: #fff; color: #059669;">Try Now</div>
+    <div class="ad-btn" style="background: #fff; color: #059669;">Compress Now</div>
 </div>
 
 <div class="bottom-buttons">
@@ -163,7 +169,6 @@ fileInput.onchange = async e => {
         
         card.onclick = () => card.classList.toggle('selected');
 
-        // Drag events
         card.ondragstart = () => card.classList.add('dragging');
         card.ondragend = () => card.classList.remove('dragging');
 
@@ -172,11 +177,10 @@ fileInput.onchange = async e => {
     setTimeout(() => { pushAd.classList.add('active'); }, 1500);
 };
 
-// Drag & Drop Reorder Logic
 pagesContainer.ondragover = e => {
     e.preventDefault();
     const dragging = document.querySelector('.dragging');
-    const afterElement = getDragAfterElement(pagesContainer, e.clientX, e.clientY);
+    const afterElement = getDragAfterElement(pagesContainer, e.clientX);
     if (afterElement == null) {
         pagesContainer.appendChild(dragging);
     } else {
@@ -184,7 +188,7 @@ pagesContainer.ondragover = e => {
     }
 };
 
-function getDragAfterElement(container, x, y) {
+function getDragAfterElement(container, x) {
     const draggableElements = [...container.querySelectorAll('.page-card:not(.dragging)')];
     return draggableElements.reduce((closest, child) => {
         const box = child.getBoundingClientRect();
@@ -200,8 +204,6 @@ function getDragAfterElement(container, x, y) {
 async function saveOrganizedPDF() {
     const newPdf = await PDFLib.PDFDocument.create();
     let cards = [...document.querySelectorAll('.page-card.selected')];
-    
-    // If none selected, take all in current order
     if (cards.length === 0) cards = [...document.querySelectorAll('.page-card')];
 
     showToast("⏳ Processing PDF...");
