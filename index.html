@@ -4,274 +4,247 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📂 Organize PDF | EasyUseHub</title>
-
-<style>
-body,html{
-font-family:'Segoe UI';
-display:flex;
-justify-content:center;
-align-items:center;
-min-height:100vh;
-background:#fff;
-}
-
-.container{
-width:90%;
-max-width:850px;
-padding:25px;
-text-align:center;
-box-shadow:0 8px 25px rgba(0,0,0,0.1);
-border-radius:12px;
-}
-
-.upload{
-padding:25px;
-border:3px dashed #9333ea;
-border-radius:15px;
-color:#9333ea;
-cursor:pointer;
-font-weight:600;
-}
-
-#pages{
-display:flex;
-flex-wrap:wrap;
-gap:12px;
-margin-top:20px;
-justify-content:center;
-}
-
-.page{
-width:95px;
-border:2px solid #ccc;
-border-radius:10px;
-padding:5px;
-background:#f9f9f9;
-cursor:grab;
-transition:0.2s;
-}
-
-.page.selected{
-border:2px solid #9333ea;
-background:#ede6fa;
-}
-
-.page canvas{
-width:100%;
-border-radius:6px;
-}
-
-.num{
-text-align:center;
-font-size:0.8rem;
-color:#475569;
-margin-top:4px;
-}
-
-.page.dragging{
-opacity:0.5;
-}
-
-button{
-padding:12px 18px;
-margin:10px 5px;
-border:none;
-border-radius:10px;
-background:#9333ea;
-color:#fff;
-font-weight:600;
-cursor:pointer;
-}
-
-#download{
-display:none;
-background:#2563eb;
-}
-
-.bottom-buttons{
-margin-top:20px;
-}
-
-.bottom-buttons a{
-padding:10px 16px;
-background:#1e293b;
-color:#fff;
-border-radius:8px;
-text-decoration:none;
-margin:5px;
-}
-
-.ad{
-margin:15px 0;
-border:2px dashed #ccc;
-padding:12px;
-border-radius:10px;
-color:#999;
-}
-</style>
-</head>
-
-<body>
-<div class="container">
-
-<h2>📂 Organize PDF</h2>
-<div style="margin-top:15px; padding:12px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0; text-align:left;">
-<p style="color:#1e293b; font-size:0.9rem; line-height:1.6; margin:0;">
-🚀 <strong>How to Use:</strong><br>
-1. Upload your PDF file (Max 30MB).<br>
-2. All pages will appear with live preview thumbnails.<br>
-3. Click pages to select/deselect (selected pages are highlighted).<br>
-4. Drag & drop pages to reorder them as needed.<br>
-5. Click <strong>Save PDF</strong> to generate your new file.<br>
-6. Download your organized PDF instantly.<br>
-✅ If no pages are selected, all pages will be saved automatically.
-</p>
-</div>
-<div class="ad">Ad Placeholder</div>
-
-<div class="upload" onclick="file.click()">📁 Upload PDF</div>
-<input type="file" id="file" hidden accept="application/pdf">
-
-<p style="font-size:0.85rem;color:#64748b;">
-Supports up to 30MB • No upload • 100% private
-</p>
-
-<div id="pages"></div>
-
-<button onclick="savePDF()">💾 Save PDF</button>
-<button id="download">📥 Download</button>
-
-<div class="bottom-buttons">
-<a href="https://easyusehub.blogspot.com/p/free-pdf-tools-online.html">📂 All PDF Tools</a>
-<a href="https://easyusehub.blogspot.com/?m=1">🏠 Home</a>
-</div>
-
-<div class="ad">Ad Placeholder</div>
-
-</div>
-
-<!-- Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 
+<style>
+:root { --primary: #9333ea; --bg: #f5f7fa; }
+body, html{ margin:0; padding:0; font-family:Arial, sans-serif; background:var(--bg); text-align:center; position: relative; overflow-x: hidden;}
+
+/* --- Compact Ad Bridges --- */
+.custom-ad-bridge {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: white; padding: 12px; margin: 15px auto; border-radius: 10px; cursor: pointer;
+    width: 90%; max-width: 600px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s;
+}
+.custom-ad-bridge:hover { transform: scale(1.01); }
+.ad-title { font-size: 15px; font-weight: bold; margin-bottom: 3px; display: block; }
+.custom-ad-bridge p { font-size: 12px; margin: 3px 0; opacity: 0.9; line-height: 1.4; }
+.ad-btn { background: #fbbf24; color: #000; padding: 5px 12px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; font-size: 10px; margin-top: 4px; }
+
+/* --- Compact Push Notification (Right-side X) --- */
+#push-notification {
+    position: fixed; bottom: -180px; right: 20px; width: 280px; background: #fff; border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15); display: flex; align-items: center; padding: 12px;
+    z-index: 10000; transition: bottom 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); cursor: pointer; border-left: 5px solid #2563eb; text-align: left;
+}
+#push-notification.active { bottom: 20px; }
+#push-notification img { width: 45px; height: 45px; border-radius: 8px; margin-right: 12px; }
+.push-text b { font-size: 13px; color: #222; display: block; }
+.push-text p { font-size: 11px; color: #666; margin: 2px 0 0 0; }
+.close-push { 
+    position: absolute; top: 5px; right: 8px; width: 22px; height: 22px;
+    background: #f1f5f9; color: #64748b; border-radius: 50%; text-align: center;
+    line-height: 20px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; border: 1px solid #e2e8f0;
+}
+
+h1{text-align:center; margin:20px; color: #333; font-size: 24px;}
+#instructions{ width:90%; max-width:650px; margin:10px auto; text-align:left; font-size:13px; background:#fff; padding:15px; border-radius:10px; border:1px solid #ddd; line-height:1.6; color:#444;}
+
+/* --- Tool Components --- */
+#upload-box{
+  border:2px dashed var(--primary); border-radius:12px; padding:35px 20px; text-align:center;
+  width:85%; max-width:450px; cursor:pointer; margin:20px auto; background: #fff; transition: 0.3s; font-weight: bold; color: var(--primary);
+}
+#upload-box:hover{ background: #f5e6fa; transform: scale(1.01); }
+
+#pages-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 20px; max-width: 1000px; margin: auto; }
+.page-card { 
+    background: #fff; border: 2px solid #ddd; border-radius: 10px; padding: 8px; cursor: grab; 
+    transition: 0.2s; position: relative; width: 110px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.page-card.selected { border-color: var(--primary); background: #f5e6fa; }
+.page-card canvas { width: 100%; height: auto; border-radius: 4px; }
+.page-num { margin-top: 5px; font-size: 11px; font-weight: bold; color: #666; }
+.page-card.dragging { opacity: 0.4; border: 2px dashed var(--primary); }
+
+.controls { margin: 20px auto; width: 90%; max-width: 700px; display: none; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+.button, .quick-btn{ padding:12px 20px; margin:5px; border:none; border-radius:8px; background:var(--primary); color:#fff; cursor:pointer; font-weight: bold; font-size: 14px; transition: 0.2s; }
+.reset-btn { background: #ef4444 !important; }
+
+.bottom-buttons{ margin: 20px 0 40px 0; }
+.bottom-link { padding:10px 22px; margin:5px; border-radius:8px; text-decoration:none; color:#fff; font-weight: bold; font-size: 13px; display: inline-block; }
+
+#toast{ position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--primary); color:#fff; padding:12px 25px; border-radius:8px; display:none; z-index:99999; font-size: 14px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+
+<div id="push-notification" onclick="window.open('https://easyusehub.blogspot.com', '_blank')">
+    <span class="close-push" onclick="event.stopPropagation(); document.getElementById('push-notification').classList.remove('active');">&times;</span>
+    <img src="https://cdn-icons-png.flaticon.com/512/5968/5968313.png" alt="icon">
+    <div class="push-text">
+        <b>🚀 46+ Pro Tools Ready!</b>
+        <p>PDF Tools, Calculators & more - 100% Free.</p>
+    </div>
+</div>
+
+<h1>📂 Organize PDF Pages</h1>
+
+<div class="custom-ad-bridge" onclick="window.open('https://easyusehub.blogspot.com', '_blank')">
+    <span class="ad-title">🚀 Try 46+ Premium Free Web Tools!</span>
+    <p>PDF Tools, 16+ Calculators, Age & BMI Tracker - 100% Free</p>
+    <div class="ad-btn">Open EasyUseHub</div>
+</div>
+
+<div id="instructions">
+  <b>How to Use:</b><br>
+  1. Upload PDF (Max 30MB). 2. Click pages to select (optional). 3. Drag pages to reorder. 4. Click Save to download.
+</div>
+
+<div id="upload-box" onclick="document.getElementById('fileInput').click()">📁 Click to Upload PDF (Max 30MB)</div>
+<input type="file" id="fileInput" accept="application/pdf" hidden>
+
+<div id="pages-container"></div>
+
+<div class="controls" id="controls">
+    <button class="button" onclick="saveOrganizedPDF()">💾 Save Organized PDF</button>
+    <button class="quick-btn reset-btn" onclick="resetTool()">🔄 Upload New File</button>
+</div>
+
+<div class="custom-ad-bridge" style="background: linear-gradient(135deg, #059669, #10b981);" onclick="window.open('https://easyusehub.blogspot.com/p/image-compressor.html', '_blank')">
+    <span class="ad-title">⚡ High-Speed Image Compressor</span>
+    <p>Optimize images without losing quality at EasyUseHub</p>
+    <div class="ad-btn" style="background: #fff; color: #059669;">Try Now</div>
+</div>
+
+<div class="bottom-buttons">
+    <a href="https://easyusehub.blogspot.com/p/free-pdf-tools-online.html" class="bottom-link" style="background:#10b981;">📂 All PDF Tools</a>
+    <a href="https://easyusehub.blogspot.com/" class="bottom-link" style="background:#f59e0b;">🏠 Home</a>
+</div>
+
+<div id="toast">✅ PDF Saved Successfully!</div>
+
 <script>
-let pdfDoc, fileData;
-let selectedPages = [];
+let pdfDocLib = null;
+let pdfBytes = null;
+let currentDownloadUrl = null;
+const fileInput = document.getElementById('fileInput');
+const pagesContainer = document.getElementById('pages-container');
+const controls = document.getElementById('controls');
+const uploadBox = document.getElementById('upload-box');
+const pushAd = document.getElementById('push-notification');
 
-// Upload
-file.onchange = async e=>{
-fileData = e.target.files[0];
+fileInput.onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-if(!fileData) return;
-if(fileData.size > 30*1024*1024){
-alert("Max 30MB");
-return;
-}
+    if (file.size > 30 * 1024 * 1024) {
+        alert("❌ Limit Exceeded: Please upload a file under 30MB.");
+        fileInput.value = ""; return;
+    }
 
-const buf = await fileData.arrayBuffer();
+    clearMemory();
+    pdfBytes = await file.arrayBuffer();
+    pdfDocLib = await PDFLib.PDFDocument.load(pdfBytes);
+    const pdfjsDoc = await pdfjsLib.getDocument({data: pdfBytes}).promise;
 
-// Load PDFs
-pdfDoc = await PDFLib.PDFDocument.load(buf);
-const pdfjs = await pdfjsLib.getDocument({data:buf}).promise;
+    uploadBox.style.display = 'none';
+    controls.style.display = 'block';
 
-pages.innerHTML='';
-selectedPages=[];
+    for (let i = 0; i < pdfjsDoc.numPages; i++) {
+        const page = await pdfjsDoc.getPage(i + 1);
+        const viewport = page.getViewport({scale: 0.3});
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width; canvas.height = viewport.height;
+        await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
 
-// Render pages
-for(let i=0;i<pdfjs.numPages;i++){
+        const card = document.createElement('div');
+        card.className = 'page-card';
+        card.draggable = true;
+        card.dataset.index = i;
 
-const page = await pdfjs.getPage(i+1);
-const viewport = page.getViewport({scale:0.25});
+        const num = document.createElement('div');
+        num.className = 'page-num';
+        num.textContent = "Page " + (i + 1);
 
-const canvas = document.createElement('canvas');
-canvas.width = viewport.width;
-canvas.height = viewport.height;
+        card.appendChild(canvas);
+        card.appendChild(num);
+        
+        card.onclick = () => card.classList.toggle('selected');
 
-await page.render({
-canvasContext:canvas.getContext('2d'),
-viewport
-}).promise;
+        // Drag events
+        card.ondragstart = () => card.classList.add('dragging');
+        card.ondragend = () => card.classList.remove('dragging');
 
-const div = document.createElement('div');
-div.className='page';
-div.draggable=true;
-
-const num = document.createElement('div');
-num.className='num';
-num.textContent = i+1;
-
-div.appendChild(canvas);
-div.appendChild(num);
-
-// 👉 CLICK SELECT FIX
-div.onclick = () => {
-div.classList.toggle('selected');
-
-let index = i;
-
-if(selectedPages.includes(index)){
-selectedPages = selectedPages.filter(p=>p!==index);
-} else {
-selectedPages.push(index);
-}
+        pagesContainer.appendChild(card);
+    }
+    setTimeout(() => { pushAd.classList.add('active'); }, 1500);
 };
 
-// 👉 DRAG
-div.ondragstart=()=>div.classList.add('dragging');
-div.ondragend=()=>div.classList.remove('dragging');
-
-pages.appendChild(div);
-}
+// Drag & Drop Reorder Logic
+pagesContainer.ondragover = e => {
+    e.preventDefault();
+    const dragging = document.querySelector('.dragging');
+    const afterElement = getDragAfterElement(pagesContainer, e.clientX, e.clientY);
+    if (afterElement == null) {
+        pagesContainer.appendChild(dragging);
+    } else {
+        pagesContainer.insertBefore(dragging, afterElement);
+    }
 };
 
-// 👉 DRAG REORDER
-pages.ondragover = e=>{
-e.preventDefault();
-
-const dragging = document.querySelector('.dragging');
-
-const after = [...pages.children].find(el=>{
-const box = el.getBoundingClientRect();
-return e.clientX < box.left + box.width/2;
-});
-
-if(after) pages.insertBefore(dragging, after);
-else pages.appendChild(dragging);
-};
-
-// 👉 SAVE PDF
-async function savePDF(){
-
-const newPdf = await PDFLib.PDFDocument.create();
-
-// যদি select করা থাকে → শুধু selected
-let items = document.querySelectorAll('.page.selected');
-
-// যদি কিছু select না করে → সব page
-if(items.length === 0){
-items = document.querySelectorAll('.page');
+function getDragAfterElement(container, x, y) {
+    const draggableElements = [...container.querySelectorAll('.page-card:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = x - box.left - box.width / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-for(let el of items){
-let i = parseInt(el.querySelector('.num').textContent)-1;
+async function saveOrganizedPDF() {
+    const newPdf = await PDFLib.PDFDocument.create();
+    let cards = [...document.querySelectorAll('.page-card.selected')];
+    
+    // If none selected, take all in current order
+    if (cards.length === 0) cards = [...document.querySelectorAll('.page-card')];
 
-const [p] = await newPdf.copyPages(pdfDoc,[i]);
-newPdf.addPage(p);
+    showToast("⏳ Processing PDF...");
+
+    for (const card of cards) {
+        const index = parseInt(card.dataset.index);
+        const [copiedPage] = await newPdf.copyPages(pdfDocLib, [index]);
+        newPdf.addPage(copiedPage);
+    }
+
+    const bytes = await newPdf.save();
+    const blob = new Blob([bytes], {type: 'application/pdf'});
+    
+    if (currentDownloadUrl) URL.revokeObjectURL(currentDownloadUrl);
+    currentDownloadUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = currentDownloadUrl;
+    a.download = `Organized_EasyUseHub_${Date.now()}.pdf`;
+    a.click();
+    showToast("✅ PDF Downloaded!");
 }
 
-const bytes = await newPdf.save();
-const blob = new Blob([bytes],{type:'application/pdf'});
-const url = URL.createObjectURL(blob);
+function clearMemory() {
+    if (currentDownloadUrl) URL.revokeObjectURL(currentDownloadUrl);
+    pagesContainer.innerHTML = '';
+    pdfDocLib = null;
+    pdfBytes = null;
+}
 
-download.style.display='block';
-download.onclick=()=>{
-let a=document.createElement('a');
-a.href=url;
-a.download='organized.pdf';
-a.click();
-};
+function resetTool() {
+    clearMemory();
+    fileInput.value = "";
+    uploadBox.style.display = 'block';
+    controls.style.display = 'none';
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
 }
 </script>
-
 </body>
 </html>
